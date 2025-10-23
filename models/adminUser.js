@@ -13,27 +13,78 @@ const adminSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        minlength: 10
+        minlength: 12
     }
 })
 
 
 //kryptera admin-lösenordet
+adminSchema.pre("save", async function(next) {
+    try {
+        //kollar om lösenordet är nytt eller ändrat samt hashar det
+        if(this.isNew || this.isModified("password")) {
+            const passwordHashed = await bcrypt.hash(this.password, 12);
+            this.password = passwordHashed;
+        };
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
 
 
 
 
 //jämför lösenordet användaren skriver in med det hashade lösenordet
+adminSchema.methods.comparePassword = async function(password) {
+    try {
+        return await bcrypt.compare(password, this.password);
 
-
-
-
-//logga in admin-användare
-
-
+    } catch(error) {
+        throw error;
+    }
+}
 
 
 //lägg till adminanvändare - BEHÖVS???? ska gå men finns för tillfället bara en?
+adminSchema.statics.register = async function (username, password) {
+    try {
+        const admin = new this({ username, password });
+
+        await admin.save();
+        return admin;
+
+    } catch (error) {
+        throw error;
+    };
+};
+
+
+//logga in admin-användare
+adminSchema.statics.login = async function(username, password) {
+    try {
+        //hitta användarnamnet
+        const admin = await this.findOne({ username });
+
+        //om användarnamnet inte finns -> error
+        if(!admin) {
+            throw new error("Användarnamnet eller lösenordet är felaktigt");
+        }
+
+        //jämför lösenordet
+        const rightPassword = await admin.comparePassword(password);
+
+        //om lösenordet är fel -> error
+        if(!rightPassword) {
+            throw new Error("Användarnamet eller lösenordet är fel");
+        }
+
+        //returnera om allt stämmer
+        return admin;
+    } catch (error) {
+        throw error;
+    }
+};
 
 
 
