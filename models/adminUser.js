@@ -46,7 +46,7 @@ adminSchema.methods.comparePassword = async function(password) {
 }
 
 
-//lägg till adminanvändare - BEHÖVS???? ska gå men finns för tillfället bara en?
+//lägg till adminanvändare - funktionen ska finnas även om öfretaget för tillfället bara har en adminanvändare
 adminSchema.statics.register = async function (username, password) {
     try {
         const admin = new this({ username, password });
